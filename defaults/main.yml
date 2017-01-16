@@ -1,0 +1,5 @@
+cloudfront_repo_build_dir: "build"
+cloudfront_repo_template_dir: "{{ cloudfront_repo_build_dir }}"
+cloudfront_repo_template_name: "cloudfront_repo.json"
+cloudfront_repo_stack_name: "{{ cloudfront_repo_name }}-cloudfront-repo"
+cloudfront_repo_security_token: "{{ lookup('env','AWS_SESSION_TOKEN') }}"
