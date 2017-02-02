@@ -1,0 +1,24 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Resources" : {
+        "myDistribution" : {
+            "Type" : "AWS::CloudFront::Distribution",
+            "Properties" : {
+                "DistributionConfig" : {
+                    "Origins" : [
+                      {% for origin in cloudfront_origins %}
+                      {{ origin | to_json }}
+                      {% if not loop.last %},{% endif %}
+                      {% endfor %}
+                    ],
+                    "Enabled" : "{{ cloudfront_enabled }}",
+                    "Comment" : "{{ cloudfront_distribution_comment }}",
+                    {% if cloudfront_enable_default_root == 'yes' %}
+                    "DefaultRootObject" : "{{ cloudfront_default_root }}",
+                    {% endif %}
+                    "DefaultCacheBehavior" : {{ cloudfront_cache_behavior | to_json }}
+                }
+            }
+        }
+    }
+}
