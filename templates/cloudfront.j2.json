@@ -1,0 +1,49 @@
+{
+    "AWSTemplateFormatVersion" : "2010-09-09",
+    "Resources" : {
+        "{{ cloudfront_distribution_name }}" : {
+            "Type" : "AWS::CloudFront::Distribution",
+            "Properties" : {
+                "DistributionConfig" : {
+                    {% if cloudfront_aliases | length > 0 %}
+                    "Aliases" : [
+                      {% for alias in cloudfront_aliases %}
+                      "{{ alias }}"
+                      {% endfor %}
+                      {% if not loop.last %},{% endif %}
+                    ],
+                    {% endif %}
+                    {% if cloudfront_custom_error_responses | length > 0 %}
+                    "CustomErrorResponses": {{ cloudfront_custom_error_responses | to_json }}
+                    ,
+                    {% endif %}
+                    "Origins" : {{ cloudfront_origins | to_json }},
+                    {% if cloudfront_price_class is defined %}
+                    "PriceClass": "{{ cloudfront_price_class }}",
+                    {% endif %}
+                    {% if cloudfront_restrictions is defined %}
+                    "Restrictions": {{ cloudfront_restrictions | to_json}},
+                    {% endif %}
+                    "Enabled" : "{{ cloudfront_enabled }}",
+                    {% if cloudfront_http_version is defined %}
+                    "HttpVersion": "{{ cloudfront_http_version }}",
+                    {% endif %}
+                    {% if cloudfront_logging is defined %}
+                    "Logging": {{ cloudfront_logging | to_json }},
+                    {% endif %}
+                    {% if cloudfront_viewer_certificate is defined %}
+                    "ViewerCertificate": {{ cloudfront_viewer_certificate | to_json }},
+                    {% endif %}
+                    {% if web_acl_id is defined %}
+                    "WebACLId": "{{ web_acl_id }}",
+                    {% endif %}
+                    "Comment" : "{{ cloudfront_distribution_comment }}",
+                    {% if cloudfront_enable_default_root == 'yes' %}
+                    "DefaultRootObject" : "{{ cloudfront_default_root }}",
+                    {% endif %}
+                    "DefaultCacheBehavior" : {{ cloudfront_cache_behavior | to_json }}
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,102 @@
+- hosts: test
+  roles:
+    - role: ansible-role-cfn-s3-bucket
+      s3_bucket_stack_name: "ansible-role-cfn-cloudfront-test-bucket"
+      s3_bucket_region: "us-west-2"
+      s3_bucket_use_versioning: 'no'
+      s3_bucket_tags:
+        "Name": "ansible-role-cfn-cloudfront-test"
+      s3_bucket_versioning: Suspended
+  post_tasks:
+    - name: Create temporary root file
+      shell: "echo '<html><body>TESTING</body></html>' > index.html"
+    - name: Copy index to bucket
+      s3:
+        bucket: "{{ s3_bucket_stack.stack_outputs.BucketName }}"
+        mode: put
+        object: "index.html"
+        src: "index.html"
+        region: "us-west-2"
+
+
+- hosts: test
+  vars:
+    cloudfront_region: "us-west-2"
+    cloudfront_name: "ansible-role-cfn-cloudfront-test-cloudfront"
+    cloudfront_origins:
+      - Id: "TestOrigin"
+        DomainName: "{{ s3_bucket_stack.stack_outputs.BucketName }}.s3.amazonaws.com"
+        S3OriginConfig:
+          OriginAccessIdentity: "origin-access-identity/cloudfront/{{ origin_identity.stdout }}"
+    cloudfront_cache_behavior:
+      "AllowedMethods": [ "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT" ]
+      "ForwardedValues":
+        "QueryString": "false"
+        "Cookies":
+          "Forward": "none"
+      "TargetOriginId": "TestOrigin"
+      "ViewerProtocolPolicy": "allow-all"
+    cloudfront_custom_error_responses:
+      - "ErrorCode": "500"
+    cloudfront_http_version: "http2"
+    cloudfront_logging:
+      "Bucket": "{{ s3_bucket_stack.stack_outputs.BucketName }}.s3.amazonaws.com"
+    cloudfront_price_class: "PriceClass_100"
+    cloudfront_restrictions:
+      "GeoRestriction":
+        "Locations":
+          - "US"
+        "RestrictionType": "whitelist"
+    cloudfront_viewer_certificate:
+      "CloudFrontDefaultCertificate": "true"
+    cloudfront_tags:
+      "Name": "ansible-role-cfn-cloudfront-test"
+  pre_tasks:
+    - name: Create origin identity
+      shell: "aws cloudfront create-cloud-front-origin-access-identity --cloud-front-origin-access-identity-config CallerReference=test,Comment=test --query 'CloudFrontOriginAccessIdentity.Id' --output=text"
+      register: origin_identity
+  roles:
+    - role: ansible-role-cfn-cloudfront
+
+- hosts: test
+  vars:
+    cloudfront_region: "us-west-2"
+    cloudfront_origins:
+      - Id: "TestOrigin"
+        DomainName: "{{ s3_bucket_stack.stack_outputs.BucketName }}.s3.amazonaws.com"
+        S3OriginConfig:
+          OriginAccessIdentity: "origin-access-identity/cloudfront/{{ origin_identity.stdout }}"
+    cloudfront_name: "ansible-role-cfn-cloudfront-test-cloudfront"
+    cloudfront_stack_state: absent
+    cloudfront_cache_behavior:
+      "AllowedMethods": [ "DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT" ]
+      "ForwardedValues":
+        "QueryString": "false"
+        "Cookies":
+          "Forward": "none"
+      "TargetOriginId": "TestOrigin"
+      "ViewerProtocolPolicy": "allow-all"
+    cloudfront_tags:
+      "Name": "ansible-role-cfn-cloudfront-test"
+  post_tasks:
+    - name: Create origin identity
+      shell: "aws cloudfront delete-cloud-front-origin-access-identity --id {{ origin_identity.stdout }}"
+      register: origin_identity
+  roles:
+    - role: ansible-role-cfn-cloudfront
+
+- hosts: test
+  pre_tasks:
+    - name: Delete index.html
+      s3:
+        mode: delobj
+        object: "index.html"
+        bucket: "{{ s3_bucket_stack.stack_outputs.BucketName }}"
+        region: "us-west-2"
+  roles:
+    - role: ansible-role-cfn-s3-bucket
+      s3_stack_state: absent
+      s3_bucket_stack_name: "ansible-role-cfn-cloudfront-test-bucket"
+      s3_bucket_region: "us-west-2"
+      s3_bucket_tags:
+        "Name": "ansible-role-cfn-cloudfront-test"

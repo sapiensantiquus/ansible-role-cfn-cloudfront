@@ -4,33 +4,32 @@
     state: directory
     path: "{{ item }}"
   with_items:
-    - "{{ cloudfront_repo_build_dir }}"
-    - "{{ cloudfront_repo_template_dir }}"
+    - "{{ cloudfront_build_dir }}"
+    - "{{ cloudfront_template_dir }}"
 
 - name: Template CloudFront repo
   template:
-    src: "cloudfront.json.j2"
-    dest: "{{ playbook_dir }}/{{ cloudfront_repo_template_dir }}/{{ cloudfront_repo_template_name }}"
+    src: "cloudfront.j2.json"
+    dest: "{{ playbook_dir }}/{{ cloudfront_template_dir }}/{{ cloudfront_template_name }}"
+
+- name: Show template
+  shell: "cat {{ playbook_dir }}/{{ cloudfront_template_dir }}/{{ cloudfront_template_name }}"
 
 - name: Create CloudFront repo stack (security token)
   cloudformation:
-    region: "{{ cloudfront_repo_region }}"
-    stack_name: "{{ cloudfront_repo_stack_name }}"
+    region: "{{ cloudfront_region }}"
+    stack_name: "{{ cloudfront_stack_name }}"
     state: "{{ cloudfront_stack_state|default('present') }}"
-    template: "{{ playbook_dir }}/{{ cloudfront_repo_template_dir }}/{{ cloudfront_repo_template_name }}"
-    template_parameters:
-      RepositoryName: "{{ cloudfront_repo_name }}"
-    tags: "{{ cloudfront_repo_tags }}"
-    security_token: "{{ cloudfront_repo_security_token }}"
-  when: cloudfront_repo_security_token is defined
+    template: "{{ playbook_dir }}/{{ cloudfront_template_dir }}/{{ cloudfront_template_name }}"
+    tags: "{{ cloudfront_tags }}"
+    security_token: "{{ cloudfront_security_token }}"
+  when: cloudfront_security_token is defined
 
 - name: Create CloudFront repo stack (no security token)
   cloudformation:
-    region: "{{ cloudfront_repo_region }}"
-    stack_name: "{{ cloudfront_repo_stack_name }}"
+    region: "{{ cloudfront_region }}"
+    stack_name: "{{ cloudfront_stack_name }}"
     state: "{{ cloudfront_stack_state|default('present') }}"
-    template: "{{ playbook_dir }}/{{ cloudfront_repo_template_dir }}/{{ cloudfront_repo_template_name }}"
-    template_parameters:
-      RepositoryName: "{{ cloudfront_repo_name }}"
-    tags: "{{ cloudfront_repo_tags }}"
-  when: cloudfront_repo_security_token is not defined
+    template: "{{ playbook_dir }}/{{ cloudfront_template_dir }}/{{ cloudfront_template_name }}"
+    tags: "{{ cloudfront_tags }}"
+  when: cloudfront_security_token is not defined
