@@ -45,5 +45,15 @@
                 }
             }
         }
+    },
+    "Outputs" :{
+      "DistributionEndpoint" : {
+        "Description" : "CloudFront Distribution Endpoint",
+        "Value" : { "Fn::GetAtt" : [ "{{ cloudfront_distribution_name }}", "DomainName" ] }
+      },
+      "DistributionId":{
+        "Description": "CloudFront Distribution ID",
+        "Value" : { "Ref" : "{{ cloudfront_distribution_name }}" }
+      }
     }
 }
