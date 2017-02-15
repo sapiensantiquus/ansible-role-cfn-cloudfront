@@ -23,6 +23,7 @@
     template: "{{ playbook_dir }}/{{ cloudfront_template_dir }}/{{ cloudfront_template_name }}"
     tags: "{{ cloudfront_tags }}"
     security_token: "{{ cloudfront_security_token }}"
+  register: cloudfront_stack
   when: cloudfront_security_token is defined
 
 - name: Create CloudFront repo stack (no security token)
@@ -32,4 +33,5 @@
     state: "{{ cloudfront_stack_state|default('present') }}"
     template: "{{ playbook_dir }}/{{ cloudfront_template_dir }}/{{ cloudfront_template_name }}"
     tags: "{{ cloudfront_tags }}"
+  register: cloudfront_stack
   when: cloudfront_security_token is not defined
